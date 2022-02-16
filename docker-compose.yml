@@ -1,0 +1,162 @@
+version: "3.4"
+services:
+  db:
+    image: ${KC_POSTGRES_IMAGE}
+    environment:
+      POSTGRES_USER: kiss-cache
+      POSTGRES_PASSWORD: kiss-cache-passwd
+    volumes:
+    - db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  celery-beat:
+    image: ${KC_IMAGE}
+    user: kiss-cache
+    depends_on:
+    - redis
+    environment:
+      SERVICE: celery-beat
+    volumes:
+    - ./share/kiss-cache.yaml:/etc/kiss-cache.yaml
+    restart: unless-stopped
+
+  celery-worker:
+    image: ${KC_IMAGE}
+    user: kiss-cache
+    environment:
+      SERVICE: celery-worker
+    volumes:
+    - cache:/var/cache/kiss-cache/
+    - ./share/kiss-cache.yaml:/etc/kiss-cache.yaml
+    depends_on:
+    - db
+    - redis
+    restart: unless-stopped
+
+  redis:
+    image: ${KC_REDIS_IMAGE}
+    restart: unless-stopped
+
+  web:
+    build: .
+    image: ${KC_IMAGE}
+    volumes:
+    - cache:/var/cache/kiss-cache/
+    - ./share/kiss-cache.yaml:/etc/kiss-cache.yaml
+    depends_on:
+    - db
+    - redis
+    environment:
+      SERVICE: gunicorn
+    ports:
+    - "${KC_FRONT_PORT}:80"
+    restart: unless-stopped
+
+# remote worker config
+
+
+  lava-dispatcher:
+    image: ${DC_DISPATCHER_IMAGE}
+    build:
+      context: ./dispatcher
+      args:
+        image: ${DC_DISPATCHER_IMAGE}
+    depends_on:
+    - lava-dispatcher-webserver
+    - lava-dispatcher-tftpd
+    - lava-dispatcher-ser2net
+    - lava-dispatcher-nfs
+    hostname: worker0
+    devices:
+    - /dev/kvm # needed for QEMU
+    - /dev/net/tun # needed for QEMU
+    security_opt:
+    - apparmor:unconfined # needed for usb mass storage
+    cap_add:
+    - NET_ADMIN # needed for QEMU
+    - SYS_ADMIN # needed for usb mass storage
+    environment:
+      WORKER_NAME: "--name=${DC_DISPATCHER_HOSTNAME}"
+      URL: "${DC_LAVA_SERVER_HOSTNAME}"
+      http_proxy: "${http_proxy}"
+      https_proxy: "${https_proxy}"
+      ftp_proxy: "${ftp_proxy}"
+    volumes:
+    - ./overlays/etc/lava-dispatcher/lava-worker:/etc/lava-dispatcher/lava-worker:ro
+#    - ./overlays/var/lib/lava/dispatcher/worker/token:/var/lib/lava/dispatcher/worker/token
+    - /var/run/docker.sock:/var/run/docker.sock # allow to use docker inside this container
+    - /run/udev:/run/udev:ro # libudev expects it for udev events
+    - /sys/devices:/sys/devices # for udevadm trigger to work
+    - /boot:/boot:ro
+    - /lib/modules:/lib/modules:ro
+    - '/dev/bus:/dev/bus:ro' # required for USB devices
+    - '/dev/serial:/dev/serial:ro' # required for serial adapters
+    - '/dev/disk:/dev/disk:ro' # required for SDMux
+    - worker-state:/var/lib/lava/dispatcher/worker/
+    - worker-http:/var/lib/lava/dispatcher/tmp
+    - worker-tftp:/srv/tftp
+
+  lava-dispatcher-webserver:
+    image: httpd
+    volumes:
+    - ./httpd/httpd.conf:/usr/local/apache2/conf/httpd.conf:ro
+    - worker-http:/var/lib/lava/dispatcher/tmp
+    ports:
+      - 80
+
+  lava-dispatcher-tftpd:
+    build:
+      context: ./tftpd
+    environment:
+      http_proxy: "${http_proxy}"
+      https_proxy: "${https_proxy}"
+      ftp_proxy: "${ftp_proxy}"
+    ports:
+        - 69:69/udp
+    volumes:
+      - worker-tftp:/srv/tftp
+
+  lava-dispatcher-ser2net:
+    build:
+      context: ./ser2net
+    environment:
+      http_proxy: "${http_proxy}"
+      https_proxy: "${https_proxy}"
+      ftp_proxy: "${ftp_proxy}"
+    privileged: true
+    volumes:
+      - '/dev/serial:/dev/serial' # required for serial adapters
+      - '/dev:/dev'
+    devices: []
+    ports:
+      - 7101:7101
+
+  lava-dispatcher-nfs:
+    build:
+      context: ./nfs
+    environment:
+      http_proxy: "${http_proxy}"
+      https_proxy: "${https_proxy}"
+      ftp_proxy: "${ftp_proxy}"
+    privileged: true
+    volumes:
+      - worker-http:/var/lib/lava/dispatcher/tmp
+    ports:
+      - 111:111
+      - 111:111/udp
+      - 2049:2049
+      - 2049:2049/udp
+      - 35543:35543
+
+volumes:
+  db:
+    name: kiss-cache-db
+  cache:
+    name: kiss-cache-cache
+  worker-state:
+    name: lava-server-worker-state
+  worker-http:
+    name: lava-server-worker-http
+  worker-tftp:
+    name: lava-server-worker-tftp
+
