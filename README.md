@@ -1,6 +1,6 @@
 # Lava remote worker
 
-This is a quickand simple way to bring up a lava remote worker. It brings up Kisscache and Lava dispatcher (only).
+This is a quick and simple way to bring up a lava remote worker. It brings up Kisscache and Lava dispatcher (only).
 
 Works under all arches. This then allows users to add a remote worker easily.
 
@@ -9,6 +9,7 @@ Works under all arches. This then allows users to add a remote worker easily.
 
 
 ```bash
+mv env_example .env
 docker-compose up
 ```
 
