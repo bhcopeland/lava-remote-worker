@@ -1,1 +1,2 @@
 .env
+overlays/var/lib/lava/dispatcher/worker/token
