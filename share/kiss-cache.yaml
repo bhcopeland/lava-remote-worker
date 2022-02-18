@@ -6,3 +6,5 @@ DATABASES:
     PASSWORD: "kiss-cache-passwd"
     HOST: "db"
     PORT: "5432"
+
+RESOURCE_QUOTA: 107374182400 # 100G

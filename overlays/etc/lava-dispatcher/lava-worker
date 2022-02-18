@@ -9,6 +9,6 @@
 # LOGLEVEL="DEBUG"
 
 # Server connection
-URL="http://lava-server:8000/"
+#URL="http://lava-server:8000/"
 # TOKEN="--token <token>"
-WS_URL="--ws-url http://lava-publisher:8001/ws/"
+#WS_URL="--ws-url http://lava-publisher:8001/ws/"
