@@ -83,7 +83,7 @@ services:
       ftp_proxy: "${ftp_proxy}"
     volumes:
     - ./overlays/etc/lava-dispatcher/lava-worker:/etc/lava-dispatcher/lava-worker:ro
-#    - ./overlays/var/lib/lava/dispatcher/worker/token:/var/lib/lava/dispatcher/worker/token
+    - ./overlays/var/lib/lava/dispatcher/worker/token:/var/lib/lava/dispatcher/worker/token
     - /var/run/docker.sock:/var/run/docker.sock # allow to use docker inside this container
     - /run/udev:/run/udev:ro # libudev expects it for udev events
     - /sys/devices:/sys/devices # for udevadm trigger to work
