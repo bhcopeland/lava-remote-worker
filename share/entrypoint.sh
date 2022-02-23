@@ -73,8 +73,10 @@ wait_migration() {
     done
 }
 
-
-if [ "$SERVICE" = "celery-worker" ]
+if [ "$SERVICE" = "nginx" ]
+then
+  exec nginx -c /etc/nginx/kiss-cache.conf -g 'daemon off;'
+elif [ "$SERVICE" = "celery-worker" ]
 then
   echo "Waiting for postgresql"
   wait_postgresql
@@ -85,10 +87,14 @@ then
   echo "done"
   echo ""
 
-  exec python3 -m celery -A website worker --loglevel=info
+  if [ "$CELERY_CONCURRENCY" != "" ]
+  then
+    CELERY_CONCURRENCY="--concurrency $CELERY_CONCURRENCY"
+  fi
+  exec python3 -m celery -A website worker $CELERY_CONCURRENCY --loglevel=INFO
 elif [ "$SERVICE" = "celery-beat" ]
 then
-  exec python3 -m celery -A website beat --loglevel=info --pidfile= -s /var/cache/kiss-cache/celerybeat-schedule
+  exec python3 -m celery -A website beat --loglevel=INFO --pidfile= -s /var/cache/kiss-cache/celerybeat-schedule
 elif [ "$SERVICE" = "gunicorn" ]
 then
   echo "Waiting for postgresql"
@@ -106,7 +112,8 @@ then
   echo "done"
   echo ""
 
+  GUNICORN_THREADS=${GUNICORN_THREADS:-10}
   GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
-  echo "Statrting gunicorn with workers=$GUNICORN_WORKERS and threads=$GUNICORN_THREADS"
-  exec gunicorn3 --log-level debug --bind 0.0.0.0:80 --worker-class eventlet --workers "$GUNICORN_WORKERS" --worker-tmp-dir /dev/shm website.wsgi
+  echo "Starting gunicorn with workers=$GUNICORN_WORKERS and threads=$GUNICORN_THREADS"
+  exec gunicorn3 --log-level debug --log-file - --access-logfile - --bind 0.0.0.0:80 --threads "$GUNICORN_THREADS" --workers "$GUNICORN_WORKERS" --worker-tmp-dir /dev/shm website.wsgi
 fi
