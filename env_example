@@ -8,9 +8,9 @@ http_proxy=
 https_proxy=
 ftp_proxy=
 
-KC_IMAGE=hub.lavasoftware.org/ivoire/kisscache:latest
+KC_IMAGE=registry.gitlab.com/linaro/kisscache:latest
 KC_POSTGRES_IMAGE=postgres:11.2-alpine
 KC_REDIS_IMAGE=redis:latest
 KC_FRONT_PORT=8001
-
+KC_WEB_SCALE=1
 

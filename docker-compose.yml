@@ -2,6 +2,8 @@ version: "3.4"
 services:
   db:
     image: ${KC_POSTGRES_IMAGE}
+    # Override some postgresql parameters on large servers
+    # command: "postgres -c shared_buffers=1GB -c max_connections=200"
     environment:
       POSTGRES_USER: kiss-cache
       POSTGRES_PASSWORD: kiss-cache-passwd
@@ -37,9 +39,22 @@ services:
     image: ${KC_REDIS_IMAGE}
     restart: unless-stopped
 
-  web:
-    build: .
+  nginx:
     image: ${KC_IMAGE}
+    volumes:
+    - cache:/var/cache/kiss-cache/
+    - ./share/nginx.conf:/etc/nginx/kiss-cache.conf:ro
+    depends_on:
+    - web
+    environment:
+      SERVICE: nginx
+    ports:
+    - "${KC_FRONT_PORT}:80"
+    restart: unless-stopped
+
+  web:
+    image: ${KC_IMAGE}
+    scale: ${KC_WEB_SCALE}
     volumes:
     - cache:/var/cache/kiss-cache/
     - ./share/kiss-cache.yaml:/etc/kiss-cache.yaml
@@ -48,9 +63,8 @@ services:
     - redis
     environment:
       SERVICE: gunicorn
-    ports:
-    - "${KC_FRONT_PORT}:80"
     restart: unless-stopped
+
 
 # remote worker config
 
