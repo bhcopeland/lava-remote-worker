@@ -4,6 +4,7 @@ DC_LAVA_SERVER_HOSTNAME=https://lkft.validation.linaro.org
 DC_LAVA_MASTER_HOSTNAME=lkft.validation.linaro.org.
 DC_LAVA_LOGS_HOSTNAME=lkft.validation.linaro.org
 DC_TOKEN=secret_token
+DC_JOB_LOGS_INTERVAL=5
 http_proxy=
 https_proxy=
 ftp_proxy=

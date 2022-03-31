@@ -92,6 +92,7 @@ services:
     environment:
       WORKER_NAME: "--name=${DC_DISPATCHER_HOSTNAME}"
       URL: "${DC_LAVA_SERVER_HOSTNAME}"
+      JOB_LOGS_INTERVAL: "${DC_JOB_LOGS_INTERVAL}"
       http_proxy: "${http_proxy}"
       https_proxy: "${https_proxy}"
       ftp_proxy: "${ftp_proxy}"

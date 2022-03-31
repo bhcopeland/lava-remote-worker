@@ -12,3 +12,4 @@
 #URL="http://lava-server:8000/"
 # TOKEN="--token <token>"
 #WS_URL="--ws-url http://lava-publisher:8001/ws/"
+JOB_LOG_INTERVAL="--job-log-interval 5"
