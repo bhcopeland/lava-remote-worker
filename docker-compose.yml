@@ -1,5 +1,10 @@
 version: "3.4"
 services:
+  watchtower:
+    image: containrrr/watchtower # auto update images
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
   db:
     image: ${KC_POSTGRES_IMAGE}
     # Override some postgresql parameters on large servers
